@@ -24,7 +24,7 @@
 Adafruit_BMP280 bme; // I2C
   
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println(F("BMP280 test"));
   Wire.begin(4,5);
   if (!bme.begin()) {  
