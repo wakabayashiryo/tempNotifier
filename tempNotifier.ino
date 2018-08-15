@@ -3,8 +3,11 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <string>
+#include <math.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
+//Must Set Crystal Frequency of board configration to 26MHz 
+
 
 // Wi-Fi SSID
 #define WLAN_SSID         "4CE676F701EA"
@@ -23,19 +26,19 @@
 // ポート番号
 #define PORT_NUMBER       80
 
-//Adafruit_BMP280 bme;
+Adafruit_BMP280 bme;
 
 void setup() 
 {
   Serial.begin(115200);
   Serial.println(F("Start notify system using IFTTT\n"));
 
-//	Wire.begin(4,5);
-//  if (!bme.begin()) 
-//  {  
-//    Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
-//    while (1);
-//  }
+	Wire.begin(4,5);
+  if (!bme.begin()) 
+  {  
+    Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
+    while (1);
+  }
   // We start by connecting to a WiFi network
 
   Serial.print("\n\nConnecting to ");
@@ -59,9 +62,9 @@ void loop()
   StaticJsonBuffer<200> jsonbuff;
   JsonObject& dat = jsonbuff.createObject();
 
-//  dat["value1"] = bme.readPressure();
-//  dat["value2"] = bme.readTemperature();
-//  dat["value3"] = bme.readAltitude(1013.25);
+  dat["value1"] = floor(bme.readPressure()/100);
+  dat["value2"] = bme.readTemperature();
+  dat["value3"] = floor(bme.readAltitude(1013.25));
     
   Serial.print("connecting to ");
   Serial.println(IFTTT_HOST_NAME);
@@ -81,18 +84,14 @@ void loop()
   value_json += "\r\n";
   
   String Packets;
-	Packets = "POST http://maker.ifttt.com/trigger/";
-	Packets += IFTTT_EVENT_NAME;
-	Packets += "/with/key/";
-	Packets += IFTTT_KEY;
-	Packets += "/ HTTP/1.1\r\nHost:maker.ifttt.com\r\nContent-Length:";
-	Packets += String(value_json.length());
-  Packets += "\r\nContent-Type: application/json\r\n\r\n";
-  Packets += value_json;
-  Packets += "\r\n";
-  
-///  sprintf(sData,"POST http://maker.ifttt.com/trigger/%s/with/key/%s/ HTTP/1.1\r\nHost:maker.ifttt.com\r\nContent-Length:%d\r\nContent-Type: application/json\r\n\r\n%s\r\n",IFTTT_EVENT_NAME,IFTTT_KEY,contentlength,value.c_str());
+	Packets = "POST http://maker.ifttt.com/trigger/" + String(IFTTT_EVENT_NAME) + "/with/key/" + String(IFTTT_KEY) + "/ HTTP/1.1\r\n";
+	Packets += "Host:maker.ifttt.com\r\n";
+	Packets += "Content-Length:" + String(value_json.length()) + "\r\n";
+  Packets += "Content-Type: application/json\r\n\r\n";
+  Packets += value_json + "\r\n";
+
   Serial.print(Packets);
+
   // This will send the request to the server
   client.print(Packets);
   int timeout = millis() + 5000;
@@ -113,5 +112,5 @@ void loop()
   Serial.println();
   Serial.println("closing connection");
 
-  delay(5000);
+  delay(600*1000);
 }
