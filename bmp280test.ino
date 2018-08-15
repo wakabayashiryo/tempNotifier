@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
+//Must Set Crystal Frequency of board configration to 26MHz 
 
 // 転送レート
 #define SERIAL_SPEED  115200
