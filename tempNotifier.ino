@@ -6,6 +6,7 @@
 #include <math.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
+#define MINUTES(t) (60000*t)
 //Must Set Crystal Frequency of board configration to 26MHz 
 
 
@@ -44,6 +45,7 @@ void setup()
   Serial.print("\n\nConnecting to ");
   Serial.println(WLAN_SSID);
 
+  WiFi.mode(WIFI_STA);
   WiFi.begin(WLAN_SSID, WLAN_PASS);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -51,6 +53,7 @@ void setup()
     Serial.print(".");
   }
 
+  wifi_set_sleep_type(LIGHT_SLEEP_T);
   Serial.println("");
   Serial.println("WiFi connected");  
   Serial.println("IP address: ");
@@ -112,5 +115,5 @@ void loop()
   Serial.println();
   Serial.println("closing connection");
 
-  delay(600*1000);
+  delay(MINUTES(10));
 }
