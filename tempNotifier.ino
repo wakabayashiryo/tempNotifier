@@ -12,9 +12,9 @@
 
 
 // Wi-Fi SSID
-#define WLAN_SSID         "hoge"
+#define WLAN_SSID         ""
 // Wi-Fi パスワード
-#define WLAN_PASS         "hoge"
+#define WLAN_PASS         ""
 
 // IFTTTのホスト名
 #define IFTTT_HOST_NAME  "maker.ifttt.com"
@@ -49,7 +49,7 @@ void setup()
 
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("hoge", "hoge");
+  SSIDs.addAP("", "");
   SSIDs.addAP(WLAN_SSID, WLAN_PASS);
 
   while(SSIDs.run() != WL_CONNECTED) 
@@ -71,19 +71,19 @@ void loop()
    if(WiFi.status()!=WL_CONNECTED)
    {
       Serial.print("reconneting...");
-       WiFi.disconnect();
-       delay(100);
-       WiFi.begin(WLAN_SSID, WLAN_PASS);
-       while((WiFi.status()!=WL_CONNECTED))
-       {
-          Serial.print(".");
+      WiFi.disconnect();
+      delay(100);
+      while(SSIDs.run()!=WL_CONNECTED)
+      {
+         Serial.print(".");
          delay(250);
-       }
+      }
       wifi_set_sleep_type(MODEM_SLEEP_T);
-      Serial.println("");
-      Serial.println("WiFi connected");
-      Serial.println("IP address: ");
-      Serial.println(WiFi.localIP());
+      Serial.println('\n');
+      Serial.print("Connected to ");
+      Serial.println(WiFi.SSID());              // Tell us what network we're connected to
+      Serial.print("IP address:\t");
+      Serial.println(WiFi.localIP());  
    }
 
   
