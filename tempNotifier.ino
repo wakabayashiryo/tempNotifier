@@ -8,8 +8,23 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
 #define MinutesIs(t) (60000*t)
-//Must Set Crystal Frequency of board configration to 26MHz
 
+//device configrations
+//device:esp8266_generic_
+//CpuFrequency_160MHz
+//VTable_flash
+//ResetMethod_ck
+//CrystalFreq_26MHz
+//FlashFreq_80MHz
+//FlashMode_qio
+//FlashSize_4M1M
+//led_2
+//LwIPVariant_v2mss536
+//Debug_Disabled
+//DebugLevel_None
+//FlashErase_none
+//UploadSpeed_115200bps
+//Must Set Crystal Frequency of board configration to 26MHz
 
 // host name of IFTTT
 #define IFTTT_HOST_NAME   "maker.ifttt.com"
@@ -85,10 +100,12 @@ void loop()
     delay(100);
     while(SSIDs.run()!=WL_CONNECTED)
     {
-       Serial.print(".");
-       delay(250);
+      delay(250);
+      digitalWrite(STAT_WIFI ,HIGH);
+      delay(250);
+      digitalWrite(STAT_WIFI ,LOW);
     }
-    digitalWrite(STAT_ERROR ,LOW);
+    digitalWrite(STAT_ERROR ,HIGH);
     wifi_set_sleep_type(MODEM_SLEEP_T);
     Serial.print("\nReconnected to "+String(WiFi.SSID())+"\nIP address:\t"+String(WiFi.localIP()));
   }
