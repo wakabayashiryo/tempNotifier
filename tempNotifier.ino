@@ -16,7 +16,7 @@
 #define WLAN_PASS         "116mt8vyhx91w"
 
 // IFTTTのホスト名
-#define IFTTT_HOST_NAME  "maker.ifttt.com"
+#define IFTTT_HOST_NAME   "maker.ifttt.com"
 
 // IFTTTのイベント名
 #define IFTTT_EVENT_NAME  "temp_notify"
@@ -27,63 +27,78 @@
 // ポート番号
 #define PORT_NUMBER       80
 
+#define STAT_WIFI         12
+#define STAT_ERROR        13
+#define STAT_WAKE         14
+
+void failed_sleep(char *errmsg);
+
 Adafruit_BMP280 bme;
 
+WiFiClient client;
+ 
 StaticJsonBuffer<200> jsonbuff;
 JsonObject& dat = jsonbuff.createObject();
 
 void setup()
 {
+  pinMode(STAT_WIFI ,OUTPUT);
+  pinMode(STAT_ERROR,OUTPUT);
+  pinMode(STAT_WAKE ,OUTPUT);
+
+  digitalWrite(STAT_WIFI ,HIGH);
+  digitalWrite(STAT_ERROR,HIGH);
+  digitalWrite(STAT_WAKE ,HIGH);
+  
   Serial.begin(115200);
-  Serial.println(F("Start notify system using IFTTT\n"));
 
   Wire.begin(4, 5);
-  if (!bme.begin())
+  if(!bme.begin())
   {
-    Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
-    while (1);
+    failed_sleep("failed to initialize BMP280");
   }
   // We start by connecting to a WiFi network
 
-  Serial.print("\n\nConnecting to ");
-  Serial.println(WLAN_SSID);
-
   WiFi.mode(WIFI_STA);
   WiFi.begin(WLAN_SSID, WLAN_PASS);
-
-  while (WiFi.status() != WL_CONNECTED) 
+  while(WiFi.status() != WL_CONNECTED) 
   {
-    delay(500);
-    Serial.print(".");
+    delay(250);
+    digitalWrite(STAT_WIFI ,HIGH);
+    delay(250);
+    digitalWrite(STAT_WIFI ,LOW);
   }
-
+  //WL_NO_SHIELD = 255,
+  //WL_IDLE_STATUS = 0,
+  //WL_NO_SSID_AVAIL = 1
+  //WL_SCAN_COMPLETED = 2
+  //WL_CONNECTED = 3
+  //WL_CONNECT_FAILED = 4
+  //WL_CONNECTION_LOST = 5
+  //WL_DISCONNECTED = 6
+   
+  digitalWrite(STAT_WIFI ,LOW);
+  
   wifi_set_sleep_type(MODEM_SLEEP_T);
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
 }
 
 void loop()
 {
+  digitalWrite(STAT_WAKE ,LOW);
+  delay(500);
+  digitalWrite(STAT_WAKE ,HIGH);
+
   dat["value1"] = floor(bme.readPressure() / 100);
   dat["value2"] = bme.readTemperature();
   dat["value3"] = floor(bme.readAltitude(1013.25));
 
-  Serial.print("connecting to ");
-  Serial.println(IFTTT_HOST_NAME);
-
   // Use WiFiClient class to create TCP connections
-  WiFiClient client;
   if (!client.connect(IFTTT_HOST_NAME, PORT_NUMBER)) 
   {
-    Serial.println("connection failed");
     return;
   }
 
-
-  // IFTTTへ送信するデータ
-
+  // Create HTML Packets sent to IFTTT
   String value_json;
   dat.printTo(value_json);
   value_json += "\r\n";
@@ -95,16 +110,16 @@ void loop()
   Packets += "Content-Type: application/json\r\n\r\n";
   Packets += value_json + "\r\n";
 
-  Serial.print(Packets);
+///  Serial.print(Packets);
 
   // This will send the request to the server
   client.print(Packets);
+  
   int timeout = millis() + 5000;
   while (client.available() == 0) 
   {
     if (timeout - millis() < 0) 
     {
-      Serial.println(">>> Client Timeout !");
       client.stop();
       return;
     }
@@ -113,11 +128,20 @@ void loop()
   // Read all the lines of the reply from server and print them to Serial
   while (client.available()) 
   {
-    Serial.print(client.readStringUntil('\r'));
+      client.readStringUntil('\r');
   }
 
-  Serial.println();
-  Serial.println("closing connection");
-
-  delay(MINUTES(15));
+  delay(MINUTES(5));
 }
+
+void failed_sleep(char *errmsg)
+{
+  Serial.println("\n"+String(errmsg));
+  
+  digitalWrite(STAT_ERROR,LOW);
+  
+  while(1)delay(1000);
+}
+
+
+
