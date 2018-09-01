@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
 #include <ArduinoJson.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -11,9 +12,9 @@
 
 
 // Wi-Fi SSID
-#define WLAN_SSID         "4CE676F701EA-1"
+#define WLAN_SSID         "hoge"
 // Wi-Fi パスワード
-#define WLAN_PASS         "116mt8vyhx91w"
+#define WLAN_PASS         "hoge"
 
 // IFTTTのホスト名
 #define IFTTT_HOST_NAME  "maker.ifttt.com"
@@ -29,6 +30,8 @@
 
 Adafruit_BMP280 bme;
 
+ESP8266WiFiMulti SSIDs;
+
 StaticJsonBuffer<200> jsonbuff;
 JsonObject& dat = jsonbuff.createObject();
 
@@ -43,25 +46,24 @@ void setup()
     Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
     while (1);
   }
+
   // We start by connecting to a WiFi network
-
-  Serial.print("\n\nConnecting to ");
-  Serial.println(WLAN_SSID);
-
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WLAN_SSID, WLAN_PASS);
+  SSIDs.addAP("hoge", "hoge");
+  SSIDs.addAP(WLAN_SSID, WLAN_PASS);
 
-  while (WiFi.status() != WL_CONNECTED) 
+  while(SSIDs.run() != WL_CONNECTED) 
   {
     delay(500);
     Serial.print(".");
   }
 
   wifi_set_sleep_type(MODEM_SLEEP_T);
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.println('\n');
+  Serial.print("Connected to ");
+  Serial.println(WiFi.SSID());              // Tell us what network we're connected to
+  Serial.print("IP address:\t");
+  Serial.println(WiFi.localIP());  
 }
 
 void loop()
