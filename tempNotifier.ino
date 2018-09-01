@@ -66,6 +66,25 @@ void setup()
 
 void loop()
 {
+   if(WiFi.status()!=WL_CONNECTED)
+   {
+      Serial.print("reconneting...");
+       WiFi.disconnect();
+       delay(100);
+       WiFi.begin(WLAN_SSID, WLAN_PASS);
+       while((WiFi.status()!=WL_CONNECTED))
+       {
+          Serial.print(".");
+         delay(250);
+       }
+      wifi_set_sleep_type(MODEM_SLEEP_T);
+      Serial.println("");
+      Serial.println("WiFi connected");
+      Serial.println("IP address: ");
+      Serial.println(WiFi.localIP());
+   }
+
+  
   dat["value1"] = floor(bme.readPressure() / 100);
   dat["value2"] = bme.readTemperature();
   dat["value3"] = floor(bme.readAltitude(1013.25));
@@ -119,5 +138,5 @@ void loop()
   Serial.println();
   Serial.println("closing connection");
 
-  delay(MINUTES(15));
+  delay(MINUTES(1));
 }
