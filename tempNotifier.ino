@@ -1,12 +1,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ArduinoJson.h>
-#include <Wire.h>
-#include <SPI.h>
+#include <DHT.h>
 #include <string>
-#include <math.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BMP280.h>
 #define MinutesIs(t) (60000*t)
 
 //device configrations
@@ -42,13 +38,13 @@
 #define STAT_ERROR        13
 #define STAT_ACT          14
 
-void failed_stop(char *errmsg);
+#define DHT_PIN           4
+#define DHT_TYPE          DHT11
+DHT dht(DHT_PIN,DHT_TYPE);
 
-Adafruit_BMP280 bme;
-
-ESP8266WiFiMulti SSIDs;
-
+void connectWiFi(void);
 WiFiClient client;
+ESP8266WiFiMulti SSIDs;
  
 StaticJsonBuffer<200> jsonbuff;
 JsonObject& dat = jsonbuff.createObject();
@@ -65,30 +61,17 @@ void setup()
   
   Serial.begin(115200);
 
-  Wire.begin(4, 5);
-  if(!bme.begin())
-  {
-    failed_stop("failed to initialize BMP280");
-  }
+  dht.begin();
 
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("", "");
+  SSIDs.addAP("4CE676F701EA", "116mt8vyhx91w");
   SSIDs.addAP("", "");
   SSIDs.addAP("", "");
 
-  while(SSIDs.run() != WL_CONNECTED) 
-  {
-    delay(500);
-    digitalWrite(STAT_WIFI ,HIGH);
-    delay(500);
-    digitalWrite(STAT_WIFI ,LOW);
-  }
-   
+  connectWiFi();
+
   digitalWrite(STAT_WIFI ,LOW);
-  
-  wifi_set_sleep_type(MODEM_SLEEP_T);
-  Serial.print("\nConnected to "+String(WiFi.SSID())+"\nIP address:\t"+String(WiFi.localIP()));
 }
 
 void loop()
@@ -98,23 +81,17 @@ void loop()
   if(WiFi.status()!=WL_CONNECTED)
   {
     digitalWrite(STAT_ERROR ,LOW);
+    
     WiFi.disconnect();
     delay(100);
-    while(SSIDs.run()!=WL_CONNECTED)
-    {
-      delay(500);
-      digitalWrite(STAT_WIFI ,HIGH);
-      delay(500);
-      digitalWrite(STAT_WIFI ,LOW);
-    }
+    connectWiFi();
+ 
     digitalWrite(STAT_ERROR ,HIGH);
-    wifi_set_sleep_type(MODEM_SLEEP_T);
-    Serial.print("\nReconnected to "+String(WiFi.SSID())+"\nIP address:\t"+String(WiFi.localIP()));
-  }
-
-  dat["value1"] = floor(bme.readPressure() / 100);
-  dat["value2"] = bme.readTemperature();
-  dat["value3"] = floor(bme.readAltitude(1013.25));
+   }
+  
+  dat["value1"] = dht.readTemperature();
+  dat["value2"] = dht.readHumidity();
+  dat["value3"] = floor(dht.computeHeatIndex(dht.convertCtoF(dat["value1"]), dat["value2"]));
   
   // Use WiFiClient class to create TCP connections
   if (!client.connect(IFTTT_HOST_NAME, PORT_NUMBER)) 
@@ -159,15 +136,18 @@ void loop()
   
   delay(MinutesIs(15));
 }
-    
-void failed_stop(char *errmsg)
+
+void connectWiFi(void)
 {
-  Serial.println("\n"+String(errmsg));
-  
-  digitalWrite(STAT_ERROR,LOW);
-  
-  while(1)delay(1000);
+  while(SSIDs.run() != WL_CONNECTED) 
+  {
+    delay(500);
+    digitalWrite(STAT_WIFI ,HIGH);
+    delay(500);
+    digitalWrite(STAT_WIFI ,LOW);
+  }
+     
+  wifi_set_sleep_type(MODEM_SLEEP_T);
+  Serial.print("\nConnected to "+String(WiFi.SSID())+"\nIP address:\t"+String(WiFi.localIP()));
 }
-
-
 
