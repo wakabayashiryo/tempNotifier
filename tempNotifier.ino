@@ -65,7 +65,7 @@ void setup()
 
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("4CE676F701EA", "116mt8vyhx91w");
+  SSIDs.addAP("", "");
   SSIDs.addAP("", "");
   SSIDs.addAP("", "");
 
@@ -111,7 +111,7 @@ void loop()
   Packets += "Content-Type: application/json\r\n\r\n";
   Packets += value_json + "\r\n";
   
-  ///  Serial.print(Packets);
+  //Serial.print(Packets);
   
   // This will send the request to the server
   client.print(Packets);
