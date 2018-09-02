@@ -35,14 +35,14 @@
 // secret key of IFTTT
 #define IFTTT_KEY         "cdjsD1Qw-5TOT4G3t53Zv_"
 
-// ポート番号
+// port number
 #define PORT_NUMBER       80
 
 #define STAT_WIFI         12
 #define STAT_ERROR        13
-#define STAT_WAKE         14
+#define STAT_ACT          14
 
-void failed_sleep(char *errmsg);
+void failed_stop(char *errmsg);
 
 Adafruit_BMP280 bme;
 
@@ -57,18 +57,18 @@ void setup()
 {
   pinMode(STAT_WIFI ,OUTPUT);
   pinMode(STAT_ERROR,OUTPUT);
-  pinMode(STAT_WAKE ,OUTPUT);
+  pinMode(STAT_ACT  ,OUTPUT);
 
   digitalWrite(STAT_WIFI ,HIGH);
   digitalWrite(STAT_ERROR,HIGH);
-  digitalWrite(STAT_WAKE ,HIGH);
+  digitalWrite(STAT_ACT  ,HIGH);
   
   Serial.begin(115200);
 
   Wire.begin(4, 5);
   if(!bme.begin())
   {
-    failed_sleep("failed to initialize BMP280");
+    failed_stop("failed to initialize BMP280");
   }
 
   // We start by connecting to a WiFi network
@@ -79,9 +79,9 @@ void setup()
 
   while(SSIDs.run() != WL_CONNECTED) 
   {
-    delay(250);
+    delay(500);
     digitalWrite(STAT_WIFI ,HIGH);
-    delay(250);
+    delay(500);
     digitalWrite(STAT_WIFI ,LOW);
   }
    
@@ -93,6 +93,8 @@ void setup()
 
 void loop()
 {  
+  digitalWrite(STAT_ACT ,LOW);
+
   if(WiFi.status()!=WL_CONNECTED)
   {
     digitalWrite(STAT_ERROR ,LOW);
@@ -100,19 +102,15 @@ void loop()
     delay(100);
     while(SSIDs.run()!=WL_CONNECTED)
     {
-      delay(250);
+      delay(500);
       digitalWrite(STAT_WIFI ,HIGH);
-      delay(250);
+      delay(500);
       digitalWrite(STAT_WIFI ,LOW);
     }
     digitalWrite(STAT_ERROR ,HIGH);
     wifi_set_sleep_type(MODEM_SLEEP_T);
     Serial.print("\nReconnected to "+String(WiFi.SSID())+"\nIP address:\t"+String(WiFi.localIP()));
   }
-
-  digitalWrite(STAT_WAKE ,LOW);
-  delay(250);
-  digitalWrite(STAT_WAKE ,HIGH);
 
   dat["value1"] = floor(bme.readPressure() / 100);
   dat["value2"] = bme.readTemperature();
@@ -130,7 +128,7 @@ void loop()
   value_json += "\r\n";
   
   String Packets;
-  Packets =  "POST http://maker.ifttt.com/trigger/" + String(IFTTT_EVENT_NAME) + "/with/key/" + String(IFTTT_KEY) + "/ HTTP/1.1\r\n";
+  Packets  = "POST http://maker.ifttt.com/trigger/" + String(IFTTT_EVENT_NAME) + "/with/key/" + String(IFTTT_KEY) + "/ HTTP/1.1\r\n";
   Packets += "Host:maker.ifttt.com\r\n";
   Packets += "Content-Length:" + String(value_json.length()) + "\r\n";
   Packets += "Content-Type: application/json\r\n\r\n";
@@ -157,10 +155,12 @@ void loop()
       client.readStringUntil('\r');
   }
   
+  digitalWrite(STAT_ACT ,HIGH);
+  
   delay(MinutesIs(15));
 }
     
-void failed_sleep(char *errmsg)
+void failed_stop(char *errmsg)
 {
   Serial.println("\n"+String(errmsg));
   
