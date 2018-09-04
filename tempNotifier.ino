@@ -65,9 +65,9 @@ void setup()
 
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("", "");
-  SSIDs.addAP("", "");
-  SSIDs.addAP("", "");
+  SSIDs.addAP("4CE676F", "");
+  SSIDs.addAP("4CE676F, "");
+  SSIDs.addAP("aterm", "");
 
   connectWiFi();
 
@@ -88,10 +88,12 @@ void loop()
  
     digitalWrite(STAT_ERROR ,HIGH);
    }
+  float temp = dht.readTemperature();
+  float humid = dht.readHumidity();
   
-  dat["value1"] = dht.readTemperature();
-  dat["value2"] = dht.readHumidity();
-  dat["value3"] = floor(dht.computeHeatIndex(dht.convertCtoF(dat["value1"]), dat["value2"]));
+  dat["value1"] = temp;
+  dat["value2"] = humid;
+  dat["value3"] = floor(0.81*temp+0.01*humid*(0.99*temp-14.3)+46.3);   //calculate heat-index
   
   // Use WiFiClient class to create TCP connections
   if (!client.connect(IFTTT_HOST_NAME, PORT_NUMBER)) 
@@ -148,6 +150,6 @@ void connectWiFi(void)
   }
      
   wifi_set_sleep_type(MODEM_SLEEP_T);
-  Serial.print("\nConnected to "+String(WiFi.SSID())+"\nIP address:\t"+String(WiFi.localIP()));
+  Serial.print("\nConnected to "+String(WiFi.SSID())+"\nIP address : "+WiFi.localIP().toString());
 }
 
