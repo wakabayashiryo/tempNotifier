@@ -42,7 +42,7 @@
 #define DHT_TYPE          DHT11
 DHT dht(DHT_PIN,DHT_TYPE);
 
-void connectWiFi(void);
+void WiFiconnect(void);
 WiFiClient client;
 ESP8266WiFiMulti SSIDs;
  
@@ -65,11 +65,11 @@ void setup()
 
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("4CE676F", "");
-  SSIDs.addAP("4CE676F, "");
-  SSIDs.addAP("aterm", "");
+  SSIDs.addAP("4CE676F701EA", "");
+  SSIDs.addAP("4CE676F701EA-1","");
+  SSIDs.addAP("aterm-912afc-g", "");
 
-  connectWiFi();
+  WiFiconnect();
 
   digitalWrite(STAT_WIFI ,LOW);
 }
@@ -84,11 +84,11 @@ void loop()
     
     WiFi.disconnect();
     delay(100);
-    connectWiFi();
+    WiFiconnect();
  
     digitalWrite(STAT_ERROR ,HIGH);
    }
-  float temp = dht.readTemperature();
+  float temp  = dht.readTemperature();
   float humid = dht.readHumidity();
   
   dat["value1"] = temp;
@@ -102,18 +102,16 @@ void loop()
   }
   
   // Create HTML Packets sent to IFTTT
-  String value_json;
-  dat.printTo(value_json);
-  value_json += "\r\n";
   
   String Packets;
   Packets  = "POST http://maker.ifttt.com/trigger/" + String(IFTTT_EVENT_NAME) + "/with/key/" + String(IFTTT_KEY) + "/ HTTP/1.1\r\n";
   Packets += "Host:maker.ifttt.com\r\n";
-  Packets += "Content-Length:" + String(value_json.length()) + "\r\n";
+  Packets += "Content-Length:" + String(dat.measureLength()) + "\r\n";
   Packets += "Content-Type: application/json\r\n\r\n";
-  Packets += value_json + "\r\n";
+  dat.printTo(Packets);
+  Packets += "\r\n";
   
-  //Serial.print(Packets);
+//  Serial.print(Packets);
   
   // This will send the request to the server
   client.print(Packets);
@@ -139,7 +137,7 @@ void loop()
   delay(MinutesIs(15));
 }
 
-void connectWiFi(void)
+void WiFiconnect(void)
 {
   while(SSIDs.run() != WL_CONNECTED) 
   {
