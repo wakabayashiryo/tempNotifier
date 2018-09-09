@@ -1,12 +1,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ArduinoJson.h>
-#include <Wire.h>
-#include <SPI.h>
+#include <DHT.h>
 #include <string>
-#include <math.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BMP280.h>
 #define MinutesIs(t) (60000*t)
 
 //device configrations
@@ -42,13 +38,13 @@
 #define STAT_ERROR        13
 #define STAT_ACT          14
 
-void failed_stop(char *errmsg);
+#define DHT_PIN           4
+#define DHT_TYPE          DHT11
+DHT dht(DHT_PIN,DHT_TYPE);
 
-Adafruit_BMP280 bme;
-
-ESP8266WiFiMulti SSIDs;
-
+void WiFiconnect(void);
 WiFiClient client;
+ESP8266WiFiMulti SSIDs;
  
 StaticJsonBuffer<200> jsonbuff;
 JsonObject& dat = jsonbuff.createObject();
@@ -65,30 +61,17 @@ void setup()
   
   Serial.begin(115200);
 
-  Wire.begin(4, 5);
-  if(!bme.begin())
-  {
-    failed_stop("failed to initialize BMP280");
-  }
+  dht.begin();
 
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("", "");
-  SSIDs.addAP("", "");
-  SSIDs.addAP("", "");
+  SSIDs.addAP("4CE676F701EA", "");
+  SSIDs.addAP("4CE676F701EA-1","");
+  SSIDs.addAP("aterm-912afc-g", "");
 
-  while(SSIDs.run() != WL_CONNECTED) 
-  {
-    delay(500);
-    digitalWrite(STAT_WIFI ,HIGH);
-    delay(500);
-    digitalWrite(STAT_WIFI ,LOW);
-  }
-   
+  WiFiconnect();
+
   digitalWrite(STAT_WIFI ,LOW);
-  
-  wifi_set_sleep_type(MODEM_SLEEP_T);
-  Serial.print("\nConnected to "+String(WiFi.SSID())+"\nIP address:\t"+String(WiFi.localIP()));
 }
 
 void loop()
@@ -98,23 +81,19 @@ void loop()
   if(WiFi.status()!=WL_CONNECTED)
   {
     digitalWrite(STAT_ERROR ,LOW);
+    
     WiFi.disconnect();
     delay(100);
-    while(SSIDs.run()!=WL_CONNECTED)
-    {
-      delay(500);
-      digitalWrite(STAT_WIFI ,HIGH);
-      delay(500);
-      digitalWrite(STAT_WIFI ,LOW);
-    }
+    WiFiconnect();
+ 
     digitalWrite(STAT_ERROR ,HIGH);
-    wifi_set_sleep_type(MODEM_SLEEP_T);
-    Serial.print("\nReconnected to "+String(WiFi.SSID())+"\nIP address:\t"+String(WiFi.localIP()));
-  }
-
-  dat["value1"] = floor(bme.readPressure() / 100);
-  dat["value2"] = bme.readTemperature();
-  dat["value3"] = floor(bme.readAltitude(1013.25));
+   }
+  float temp  = dht.readTemperature();
+  float humid = dht.readHumidity();
+  
+  dat["value1"] = temp;
+  dat["value2"] = humid;
+  dat["value3"] = floor(0.81*temp+0.01*humid*(0.99*temp-14.3)+46.3);   //calculate heat-index
   
   // Use WiFiClient class to create TCP connections
   if (!client.connect(IFTTT_HOST_NAME, PORT_NUMBER)) 
@@ -123,18 +102,16 @@ void loop()
   }
   
   // Create HTML Packets sent to IFTTT
-  String value_json;
-  dat.printTo(value_json);
-  value_json += "\r\n";
   
   String Packets;
   Packets  = "POST http://maker.ifttt.com/trigger/" + String(IFTTT_EVENT_NAME) + "/with/key/" + String(IFTTT_KEY) + "/ HTTP/1.1\r\n";
   Packets += "Host:maker.ifttt.com\r\n";
-  Packets += "Content-Length:" + String(value_json.length()) + "\r\n";
+  Packets += "Content-Length:" + String(dat.measureLength()) + "\r\n";
   Packets += "Content-Type: application/json\r\n\r\n";
-  Packets += value_json + "\r\n";
+  dat.printTo(Packets);
+  Packets += "\r\n";
   
-  ///  Serial.print(Packets);
+//  Serial.print(Packets);
   
   // This will send the request to the server
   client.print(Packets);
@@ -159,15 +136,18 @@ void loop()
   
   delay(MinutesIs(15));
 }
-    
-void failed_stop(char *errmsg)
+
+void WiFiconnect(void)
 {
-  Serial.println("\n"+String(errmsg));
-  
-  digitalWrite(STAT_ERROR,LOW);
-  
-  while(1)delay(1000);
+  while(SSIDs.run() != WL_CONNECTED) 
+  {
+    delay(500);
+    digitalWrite(STAT_WIFI ,HIGH);
+    delay(500);
+    digitalWrite(STAT_WIFI ,LOW);
+  }
+     
+  wifi_set_sleep_type(MODEM_SLEEP_T);
+  Serial.print("\nConnected to "+String(WiFi.SSID())+"\nIP address : "+WiFi.localIP().toString());
 }
-
-
 
