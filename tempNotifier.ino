@@ -40,9 +40,9 @@
 
 #define STAT_ACT          12
 #define STAT_ERROR        13
-#define STAT_WIFI         14
+#define STAT_WIFI         16
 
-#define DHT_PIN           16
+#define DHT_PIN           14
 #define DHT_TYPE          DHT11
 DHT dht(DHT_PIN,DHT_TYPE);
 
@@ -68,6 +68,7 @@ void setup()
   Serial.begin(115200);
  
   dht.begin();
+  
   Wire.begin(4,5);
   if(!bmp.begin())
   {
@@ -77,9 +78,9 @@ void setup()
   
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("4CE676F701EA",  "116mt8vyhx91w");
-  SSIDs.addAP("4CE676F701EA-1","116mt8vyhx91w");
-  SSIDs.addAP("aterm-912afc-g","39f9398943819");
+  SSIDs.addAP("4CE676F701EA",  "");
+  SSIDs.addAP("4CE676F701EA-1","");
+  SSIDs.addAP("aterm-912afc-g","");
 
   WiFiconnect();
 
@@ -103,8 +104,6 @@ void loop()
   float temp  = dht.readTemperature();
   float humid = dht.readHumidity();
   
-//  dat["value1"] = temp;
-//  dat["value2"] = humid;
   dat["value1"] = bmp.readTemperature();
   dat["value2"] = bmp.readPressure();
   dat["value3"] = floor(0.81*temp+0.01*humid*(0.99*temp-14.3)+46.3);   //calculate heat-index
@@ -116,9 +115,8 @@ void loop()
   }
   
   // Create HTML Packets sent to IFTTT
-  
   String Packets;
-  Packets  = "POST http://maker.ifttt.com/trigger/" + String(IFTTT_EVENT_NAME) + "/with/key/" + String(IFTTT_KEY) + "/HTTP/1.1\r\n";
+  Packets  = "POST https://maker.ifttt.com/trigger/" + String(IFTTT_EVENT_NAME) + "/with/key/" + String(IFTTT_KEY) + "/ HTTP/1.1\r\n";
   Packets += "Host:maker.ifttt.com\r\n";
   Packets += "Content-Length:" + String(dat.measureLength()) + "\r\n";
   Packets += "Content-Type: application/json\r\n\r\n";
