@@ -2,10 +2,11 @@
 #include <ESP8266WiFiMulti.h>
 #include <Wire.h>
 #include <ArduinoJson.h>
+#include <string>
 #include <DHT.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
-#include <string>
+#include "Ambient.h"
 
 #define MinutesIs(t) (60000*t)
 
@@ -26,17 +27,15 @@
 //UploadSpeed_115200bps
 //Must Set Crystal Frequency of board configration to 26MHz
 
-// host name of IFTTT
+// definitation of IFTTT
 #define IFTTT_HOST_NAME   "maker.ifttt.com"
-
-// event name of IFTTT
 #define IFTTT_EVENT_NAME  "temp_notify"
-
-// secret key of IFTTT
 #define IFTTT_KEY         "cdjsD1Qw-5TOT4G3t53Zv_"
-
-// port number
 #define PORT_NUMBER       80
+
+//definitation of Ambient
+#define AMBIENT_ID        6469
+#define AMBIENT_KEY       "62ebf86863cc7a62"  
 
 #define STAT_ACT          12
 #define STAT_ERROR        13
@@ -51,6 +50,8 @@ Adafruit_BMP280 bmp;
 void WiFiconnect(void);
 WiFiClient client;
 ESP8266WiFiMulti SSIDs;
+
+Ambient ambient;
  
 StaticJsonBuffer<200> jsonbuff;
 JsonObject& dat = jsonbuff.createObject();
@@ -79,11 +80,14 @@ void setup()
   WiFi.mode(WIFI_STA);
   SSIDs.addAP("4CE676F701EA",  "116mt8vyhx91w");
   SSIDs.addAP("4CE676F701EA-1","116mt8vyhx91w");
-  SSIDs.addAP("aterm-912afc-g","");
+  SSIDs.addAP("aterm-912afc-g","39f9398943819");
 
   WiFiconnect();
 
   digitalWrite(STAT_WIFI ,LOW);
+
+  ambient.begin(AMBIENT_ID,AMBIENT_KEY,&client);
+
 }
 
 void loop()
@@ -102,6 +106,12 @@ void loop()
    }
   float temp  = dht.readTemperature();
   float humid = dht.readHumidity();
+  float pres  = bmp.readPressure();
+
+  ambient.set(1,temp);
+  ambient.set(2,humid);
+  ambient.set(3,pres/100);
+  ambient.set(4,floor(0.81*temp+0.01*humid*(0.99*temp-14.3)+46.3));
   
   dat["value1"] = bmp.readTemperature();
   dat["value2"] = bmp.readPressure();
@@ -142,10 +152,12 @@ void loop()
   {
       client.readStringUntil('\r');
   }
+
+  ambient.send();
   
   digitalWrite(STAT_ACT ,HIGH);
   
-  delay(MinutesIs(15));
+  delay(MinutesIs(1));
 }
 
 void WiFiconnect(void)
