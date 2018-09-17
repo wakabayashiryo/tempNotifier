@@ -69,7 +69,6 @@ void setup()
  
   dht.begin();
   
-  Wire.begin(4,5);
   if(!bmp.begin())
   {
     digitalWrite(STAT_ERROR ,LOW);
@@ -78,8 +77,8 @@ void setup()
   
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("4CE676F701EA",  "");
-  SSIDs.addAP("4CE676F701EA-1","");
+  SSIDs.addAP("4CE676F701EA",  "116mt8vyhx91w");
+  SSIDs.addAP("4CE676F701EA-1","116mt8vyhx91w");
   SSIDs.addAP("aterm-912afc-g","");
 
   WiFiconnect();
@@ -116,7 +115,7 @@ void loop()
   
   // Create HTML Packets sent to IFTTT
   String Packets;
-  Packets  = "POST https://maker.ifttt.com/trigger/" + String(IFTTT_EVENT_NAME) + "/with/key/" + String(IFTTT_KEY) + "/ HTTP/1.1\r\n";
+  Packets  = "POST https://maker.ifttt.com/trigger/" + String(IFTTT_EVENT_NAME) + "/with/key/" + String(IFTTT_KEY) + "/ "+"HTTP/1.1\r\n";
   Packets += "Host:maker.ifttt.com\r\n";
   Packets += "Content-Length:" + String(dat.measureLength()) + "\r\n";
   Packets += "Content-Type: application/json\r\n\r\n";
