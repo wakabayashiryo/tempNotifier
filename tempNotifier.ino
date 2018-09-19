@@ -2,41 +2,23 @@
 #include <ESP8266WiFiMulti.h>
 #include <Wire.h>
 #include <ArduinoJson.h>
+#include <string>
 #include <DHT.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
-#include <string>
+#include "Ambient.h"
 
-#define MinutesIs(t) (60000*t)
+#define RunPeriod         5
 
-//device configrations
-//device:esp8266_generic_
-//CpuFrequency_160MHz
-//VTable_flash
-//ResetMethod_ck
-//CrystalFreq_26MHz
-//FlashFreq_80MHz
-//FlashMode_qio
-//FlashSize_4M1M
-//led_2
-//LwIPVariant_v2mss536
-//Debug_Disabled
-//DebugLevel_None
-//FlashErase_none
-//UploadSpeed_115200bps
-//Must Set Crystal Frequency of board configration to 26MHz
-
-// host name of IFTTT
+// definitation of IFTTT
 #define IFTTT_HOST_NAME   "maker.ifttt.com"
-
-// event name of IFTTT
 #define IFTTT_EVENT_NAME  "temp_notify"
-
-// secret key of IFTTT
 #define IFTTT_KEY         "cdjsD1Qw-5TOT4G3t53Zv_"
-
-// port number
 #define PORT_NUMBER       80
+
+//definitation of Ambient
+#define AMBIENT_ID        6469
+#define AMBIENT_KEY       "62ebf86863cc7a62"  
 
 #define STAT_ACT          12
 #define STAT_ERROR        13
@@ -51,6 +33,8 @@ Adafruit_BMP280 bmp;
 void WiFiconnect(void);
 WiFiClient client;
 ESP8266WiFiMulti SSIDs;
+
+Ambient ambient;
  
 StaticJsonBuffer<200> jsonbuff;
 JsonObject& dat = jsonbuff.createObject();
@@ -77,13 +61,16 @@ void setup()
   
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("4CE676F701EA",  "116mt8vyhx91w");
-  SSIDs.addAP("4CE676F701EA-1","116mt8vyhx91w");
+  SSIDs.addAP("4CE676F701EA",  "");
+  SSIDs.addAP("4CE676F701EA-1","");
   SSIDs.addAP("aterm-912afc-g","");
 
   WiFiconnect();
 
   digitalWrite(STAT_WIFI ,LOW);
+
+  ambient.begin(AMBIENT_ID,AMBIENT_KEY,&client);
+
 }
 
 void loop()
@@ -99,9 +86,16 @@ void loop()
     WiFiconnect();
  
     digitalWrite(STAT_ERROR ,HIGH);
-   }
+  }
+  
   float temp  = dht.readTemperature();
   float humid = dht.readHumidity();
+  float pres  = bmp.readPressure();
+
+  ambient.set(1,temp);
+  ambient.set(2,humid);
+  ambient.set(3,pres/100);
+  ambient.set(4,floor(0.81*temp+0.01*humid*(0.99*temp-14.3)+46.3));
   
   dat["value1"] = bmp.readTemperature();
   dat["value2"] = bmp.readPressure();
@@ -142,10 +136,12 @@ void loop()
   {
       client.readStringUntil('\r');
   }
+
+  ambient.send();
   
   digitalWrite(STAT_ACT ,HIGH);
   
-  delay(MinutesIs(15));
+  delay(RunPeriod*60000);
 }
 
 void WiFiconnect(void)
