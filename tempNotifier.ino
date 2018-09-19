@@ -8,24 +8,7 @@
 #include <Adafruit_BMP280.h>
 #include "Ambient.h"
 
-#define MinutesIs(t) (60000*t)
-
-//device configrations
-//device:esp8266_generic_
-//CpuFrequency_160MHz
-//VTable_flash
-//ResetMethod_ck
-//CrystalFreq_26MHz
-//FlashFreq_80MHz
-//FlashMode_qio
-//FlashSize_4M1M
-//led_2
-//LwIPVariant_v2mss536
-//Debug_Disabled
-//DebugLevel_None
-//FlashErase_none
-//UploadSpeed_115200bps
-//Must Set Crystal Frequency of board configration to 26MHz
+#define RunPeriod(t) (60000*t)
 
 // definitation of IFTTT
 #define IFTTT_HOST_NAME   "maker.ifttt.com"
@@ -78,9 +61,9 @@ void setup()
   
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("4CE676F701EA",  "116mt8vyhx91w");
-  SSIDs.addAP("4CE676F701EA-1","116mt8vyhx91w");
-  SSIDs.addAP("aterm-912afc-g","39f9398943819");
+  SSIDs.addAP("4CE676F701EA",  "");
+  SSIDs.addAP("4CE676F701EA-1","");
+  SSIDs.addAP("aterm-912afc-g","");
 
   WiFiconnect();
 
@@ -103,7 +86,8 @@ void loop()
     WiFiconnect();
  
     digitalWrite(STAT_ERROR ,HIGH);
-   }
+  }
+  
   float temp  = dht.readTemperature();
   float humid = dht.readHumidity();
   float pres  = bmp.readPressure();
@@ -157,7 +141,7 @@ void loop()
   
   digitalWrite(STAT_ACT ,HIGH);
   
-  delay(MinutesIs(1));
+  delay(RunPeriod(1));
 }
 
 void WiFiconnect(void)
