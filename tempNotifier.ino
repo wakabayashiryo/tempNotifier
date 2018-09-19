@@ -8,7 +8,7 @@
 #include <Adafruit_BMP280.h>
 #include "Ambient.h"
 
-#define RunPeriod(t) (60000*t)
+#define RunPeriod         5
 
 // definitation of IFTTT
 #define IFTTT_HOST_NAME   "maker.ifttt.com"
@@ -141,7 +141,7 @@ void loop()
   
   digitalWrite(STAT_ACT ,HIGH);
   
-  delay(RunPeriod(1));
+  delay(RunPeriod*60000);
 }
 
 void WiFiconnect(void)
