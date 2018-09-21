@@ -24,6 +24,7 @@
 #define STAT_ERROR        13
 #define STAT_WIFI         16
 
+float temp,humid,press;
 #define DHT_PIN           14
 #define DHT_TYPE          DHT11
 DHT dht(DHT_PIN,DHT_TYPE);
@@ -52,9 +53,9 @@ void setup()
  
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("4CE676F701EA",  "116mt8vyhx91w");
-  SSIDs.addAP("4CE676F701EA-1","116mt8vyhx91w");
-  SSIDs.addAP("aterm-912afc-g","39f9398943819");
+  SSIDs.addAP("4CE676F701EA",  "");
+  SSIDs.addAP("4CE676F701EA-1","");
+  SSIDs.addAP("aterm-912afc-g","");
 
   WiFiconnect();
 
@@ -69,15 +70,13 @@ void setup()
   
   ambient.begin(AMBIENT_ID,AMBIENT_KEY,&client);
   
-  Send2LINE("info","Start to run!");
+  Send2LINE("info","Start Enviroment Monitor!");
 }
 
 void loop()
 {  
   if(WiFi.status()!=WL_CONNECTED)
-  {
-    Send2LINE("error","Disconnected WiFi.");
-    
+  {    
     digitalWrite(STAT_ERROR ,LOW);
     
     WiFi.disconnect();
@@ -87,23 +86,22 @@ void loop()
     digitalWrite(STAT_ERROR ,HIGH);
   }
   
-  float temp  = dht.readTemperature();
-  float humid = dht.readHumidity();
-  float pres  = bmp.readPressure();
+  temp  = dht.readTemperature();
+  humid = dht.readHumidity();
+  press = bmp.readPressure();
 
   ambient.set(1,temp);
   ambient.set(2,humid);
-  ambient.set(3,pres/100);
+  ambient.set(3,press/100);
   ambient.set(4,floor(0.81*temp+0.01*humid*(0.99*temp-14.3)+46.3));
 
   digitalWrite(STAT_ACT ,LOW);
   
-  bool res = ambient.send();
-  if(res==false)
+  if(ambient.send() == false)
   {
     Send2LINE("error","Did not send to ambient.");
   }
-  
+
   digitalWrite(STAT_ACT ,HIGH);
   
   delay(WakePeriod*60000);
@@ -118,7 +116,6 @@ void WiFiconnect(void)
     delay(500);
     digitalWrite(STAT_WIFI ,LOW);
   }
-  digitalWrite(STAT_WIFI ,LOW);
      
   wifi_set_sleep_type(MODEM_SLEEP_T);
   
@@ -128,7 +125,7 @@ void WiFiconnect(void)
 void Send2LINE(String category,String message)
 {
   Serial.println("[" + category + "]:" + message);
-  
+    
   dat["value1"] = category;
   dat["value2"] = message;
   
@@ -149,10 +146,12 @@ void Send2LINE(String category,String message)
   dat.printTo(Packets);
   Packets += "\r\n";
   //Serial.println(Packets);
+
+  digitalWrite(STAT_ACT ,LOW);
   
   // This will send the request to the server
   client.print(Packets);
-  
+    
   static int32_t timeout = millis() + 5000;
   while (client.available() == 0) 
   {
@@ -165,6 +164,7 @@ void Send2LINE(String category,String message)
       return ;
     }
   }
+  digitalWrite(STAT_ACT ,HIGH);
   
   // Read all the lines of the reply from server and print them to Serial
   while (client.available()) 
@@ -173,5 +173,5 @@ void Send2LINE(String category,String message)
       //Serial.print(client.readStringUntil('\r'));
       client.readStringUntil('\r');
   }
-  
+
 }
