@@ -8,9 +8,9 @@ void SSIDregister(void)
 {
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
-  SSIDs.addAP("4CE676F701EA",  "116mt8vyhx91w");
-  SSIDs.addAP("4CE676F701EA-1","116mt8vyhx91w");
-  SSIDs.addAP("aterm-912afc-g","39f9398943819");
+  SSIDs.addAP("4CE676F701EA",  "");
+  SSIDs.addAP("4CE676F701EA-1","");
+  SSIDs.addAP("aterm-912afc-g","");
 }
 
 bool WiFiconnect(void)
