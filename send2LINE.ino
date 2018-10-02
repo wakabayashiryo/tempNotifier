@@ -38,10 +38,10 @@ void Send2LINE(String category,String message)
   // This will send the request to the server
   client.print(Packets);
     
-  static int32_t timeout = millis() + 5000;
+  int32_t timeout = millis() + 5000;
   while (client.available() == 0) 
   {
-    if (timeout - millis() < 0) 
+    if (timeout - (int32_t)millis() < 0) 
     {
       client.stop();
       

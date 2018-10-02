@@ -104,6 +104,10 @@ void extAmbient_BulkSend(void)
   fp.close();
 
   fp = SPIFFS.open("backup.txt","r");
+  if(!fp)
+  {
+    Serial.print("can not open backup.txt");
+  }
 
   String bulkdata = fp.readStringUntil('\n');
 
