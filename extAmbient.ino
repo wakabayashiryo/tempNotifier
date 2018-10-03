@@ -13,14 +13,16 @@ File fp;
 time_t t;
 struct tm *tm;
 
+String bulkdata ;
+
 void extAmbient_Generate_File(void)
 {
-  fp = SPIFFS.open("backup.txt","a");
+  fp = SPIFFS.open("backup.txt","w");
   if(!fp)
   {
     Send2LINE("error","Can not open back-up file.");
   }
-  fp.print("{ \"writeKey\" : " + String(AMBIENT_KEY) + ",");
+  fp.print("{ \"writeKey\" : \"" + String(AMBIENT_KEY) + "\",");
   fp.print(" \"data\" : [ ");
 }
 
@@ -81,10 +83,10 @@ static String data2json(float d1,float d2,float d3,float d4)
 {
   String json;
   
-  json  = " \"d1\" : " + String(d1) + ",";
-  json += " \"d2\" : " + String(d2) + ",";
-  json += " \"d3\" : " + String(d3) + ",";
-  json += " \"d4\" : " + String(d4) + ",";
+  json  = " \"d1\" : \"" + String(d1) + "\",";
+  json += " \"d2\" : \"" + String(d2) + "\",";
+  json += " \"d3\" : \"" + String(d3) + "\",";
+  json += " \"d4\" : \"" + String(d4) + "\" ";
 
   return json;
 }
@@ -94,12 +96,12 @@ void extAmbient_Store(float d1,float d2,float d3,float d4)
   t  = time(NULL);
   tm = localtime(&t);
   
-  fp.print("{ \"created\" : " + time2json(tm) + data2json(d1,d2,d3,d4) + "}");
+  fp.print("{ \"created\" : " + time2json(tm) + data2json(d1,d2,d3,d4) + "},");
 }
 
 void extAmbient_BulkSend(void)
 {
-  fp.print("] }\n");
+  fp.print("] }");
   
   fp.close();
 
@@ -109,12 +111,13 @@ void extAmbient_BulkSend(void)
     Serial.print("can not open backup.txt");
   }
 
-  String bulkdata = fp.readStringUntil('\n');
+  bulkdata = fp.readStringUntil('\n');
 
-  Serial.print(bulkdata);
+  Serial.println((char *)bulkdata.c_str());
  
-  ambient.bulk_send((char *)bulkdata.c_str());
+  uint8_t sentNum = ambient.bulk_send((char *)bulkdata.c_str());
 
+  Serial.println(sentNum);
   fp.close();
   
   SPIFFS.remove("backup.txt");
