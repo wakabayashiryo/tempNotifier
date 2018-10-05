@@ -10,9 +10,9 @@ Ambient ambient;
 time_t t;
 struct tm *tm;
 
-#define _MAX_PAYLOAD      50000
-#define _ALLOW_SPACE      500
-#define _REALLOC_SIZE     1000
+#define _MAX_PAYLOAD      20000
+#define _ALLOW_SPACE      100
+#define _REALLOC_SIZE     5000
 static char     *payload;
 static uint32_t payload_size;
 
@@ -21,9 +21,9 @@ static void Check_Size(uint32_t size)
   uint32_t buffer_size = sizeof(payload)/sizeof(char*);
   payload_size += size;
   
-  if((buffer_size - payload_size) < _ALLOW_SPACE)
+  if((buffer_size - payload_size)  < _ALLOW_SPACE)
   {
-    if(buffer_size+_REALLOC_SIZE>_MAX_PAYLOAD)
+    if((buffer_size +_REALLOC_SIZE) >_MAX_PAYLOAD)
     {
       Send2LINE("error","RAM is not large enough space");
       return ;
@@ -126,9 +126,10 @@ void extAmbient_BulkSend(void)
 {
   Check_Size(sprintf(payload,"]}\r\n"));
   
-  uint8_t sentNum = ambient.bulk_send(payload);
+  uint32_t sentNum = ambient.bulk_send(payload);
 
   Serial.println("Contents of payload\n"+String(payload));
+  Serial.println("payload size is [" + String(strlen(payload)) + "]Bytes");
   Serial.println("sent size["+String(sentNum)+"]Bytes");  
 
   free(payload);
