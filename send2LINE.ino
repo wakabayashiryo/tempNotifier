@@ -49,7 +49,7 @@ void Send2LINE(String category,String message)
       client.stop();
       
       digitalWrite(STAT_ERROR ,LOW);
-      Serial.println("[error]:Time out recieved response from server.");
+      Serial.println("[error]:Recieving response timed out from server.");
       return ;
     }
   }

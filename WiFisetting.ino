@@ -21,7 +21,7 @@ bool WiFiconnect(void)
   {
     if (timeout - (int32_t)millis() < 0) 
     {
-      Serial.println("[error]:Time out scan access points.");
+      Serial.println("[error]:Access point connection timed out.");
       return false;
     }
     delay(500);
