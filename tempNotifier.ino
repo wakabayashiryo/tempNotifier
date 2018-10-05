@@ -45,7 +45,6 @@ void setup(void)
   
   if(!bmp.begin())
   {
-    digitalWrite(STAT_ERROR ,LOW);
     Send2LINE("error:","Did not initialize BMP280!");
   }
 
@@ -79,7 +78,7 @@ void loop(void)
     else if(connectionIs==true)
     {
       connectionIs = false;
-      extAmbient_Generate_File();
+      extAmbient_Create_Buffer(5000);
     }
   }
 

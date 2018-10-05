@@ -10,6 +10,9 @@ JsonObject& dat = jsonbuff.createObject();
 
 void Send2LINE(String category,String message)
 {
+  if(category == "error")
+    digitalWrite(STAT_ERROR ,LOW);
+    
   Serial.println("[" + category + "]:" + message);
     
   dat["value1"] = category;

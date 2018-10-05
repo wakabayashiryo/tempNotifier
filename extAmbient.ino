@@ -1,29 +1,61 @@
 #include <time.h>
-#include<FS.h>
 #include "Ambient.h"
 
 //definitation of Ambient
 #define AMBIENT_ID        6469
 #define AMBIENT_KEY       "62ebf86863cc7a62"  
-
 Ambient ambient;
-File fp;
 
-#define JST     3600*9
+#define JST               3600*9
 time_t t;
 struct tm *tm;
 
-String bulkdata ;
+#define _MAX_PAYLOAD      50000
+#define _ALLOW_SPACE      500
+#define _REALLOC_SIZE     1000
+static char     *payload;
+static uint32_t payload_size;
 
-void extAmbient_Generate_File(void)
+static void Check_Size(uint32_t size)
 {
-  fp = SPIFFS.open("backup.txt","w");
-  if(!fp)
+  uint32_t buffer_size = sizeof(payload)/sizeof(char*);
+  payload_size += size;
+  
+  if((buffer_size - payload_size) < _ALLOW_SPACE)
   {
-    Send2LINE("error","Can not open back-up file.");
+    if(buffer_size+_REALLOC_SIZE>_MAX_PAYLOAD)
+    {
+      Send2LINE("error","RAM is not large enough space");
+      return ;
+    }
+
+    char *res = (char *)realloc(payload,sizeof(char*)*_REALLOC_SIZE);
+    if(res == NULL)
+    {
+        Send2LINE("error","failed realloc function.");
+    }
   }
-  fp.print("{ \"writeKey\" : \"" + String(AMBIENT_KEY) + "\",");
-  fp.print(" \"data\" : [ ");
+}
+
+void extAmbient_Create_Buffer(uint32_t buffersize)
+{
+  if(buffersize >= _MAX_PAYLOAD)
+  {
+    buffersize = _MAX_PAYLOAD;
+    Send2LINE("error","The value you specifyed is over max size.");
+  }
+     
+  payload = (char *)malloc(sizeof(char*)*buffersize);
+  if(payload == NULL)
+  {
+      Send2LINE("error","Did not secure buffer for back up.");
+  }
+  
+  payload_size = 0;
+  memset(payload,NULL,strlen(payload));
+  
+  Check_Size(sprintf(payload,"{ \"writeKey\" : \"%s\",",AMBIENT_KEY));
+  Check_Size(sprintf(payload," \"data\" : [ "));
 }
 
 void extAmbient_Init(WiFiClient *clt)
@@ -32,9 +64,7 @@ void extAmbient_Init(WiFiClient *clt)
   
   configTime( JST, 0, "ntp.nict.jp", "ntp.jst.mfeed.ad.jp");
 
-  SPIFFS.begin();
-  SPIFFS.format();
-  extAmbient_Generate_File();
+  extAmbient_Create_Buffer(5000);
 }
 
 void extAmbient_Set(float d1,float d2,float d3,float d4)
@@ -63,32 +93,22 @@ void extAmbient_Send(void)
 }          
 */
 
-static String time2json(struct tm *tms)
+static uint16_t time2json(struct tm *tms)
 { 
-  String json;
-  
-  json  = " \""+ String(tms->tm_year+1900) + "-";
-  json +=        String(tms->tm_mon+1    ) + "-";
-  json +=        String(tms->tm_mday     ) + " ";
-  json +=        String(tms->tm_hour     ) + ":";
-  json +=        String(tms->tm_min      ) + ":";
-  json +=        String(tms->tm_sec      ) + ".";
-  json +=        "000";
-  json += " \",";
-
-  return json;
+   return sprintf(payload,"\"%u-%u-%u %u:%u:&u.000\",",\
+   tms->tm_year+1900,                                 \
+   tms->tm_mon+1,                                     \
+   tms->tm_mday,                                      \
+   tms->tm_hour,                                      \
+   tms->tm_min,                                       \
+   tms->tm_sec                                        \
+   );
 }
 
-static String data2json(float d1,float d2,float d3,float d4)
+static uint16_t data2json(float d1,float d2,float d3,float d4)
 {
-  String json;
-  
-  json  = " \"d1\" : \"" + String(d1) + "\",";
-  json += " \"d2\" : \"" + String(d2) + "\",";
-  json += " \"d3\" : \"" + String(d3) + "\",";
-  json += " \"d4\" : \"" + String(d4) + "\" ";
-
-  return json;
+ return sprintf(payload,"\"d1\":\"%f\",\"d2\":\"%f\",\"d3\":\"%f\",\"d4\":\"%f\",",\
+                                  d1,           d2,           d3,           d4);
 }
 
 void extAmbient_Store(float d1,float d2,float d3,float d4)
@@ -96,31 +116,21 @@ void extAmbient_Store(float d1,float d2,float d3,float d4)
   t  = time(NULL);
   tm = localtime(&t);
   
-  fp.print("{ \"created\" : " + time2json(tm) + data2json(d1,d2,d3,d4) + "},");
+  Check_Size(sprintf(payload,"{ \"created\" : "));
+  Check_Size(time2json(tm));
+  Check_Size(data2json(d1,d2,d3,d4));
+  Check_Size(sprintf(payload,"}."));
 }
 
 void extAmbient_BulkSend(void)
 {
-  fp.print("] }");
+  Check_Size(sprintf(payload,"]}\r\n"));
   
-  fp.close();
+  uint8_t sentNum = ambient.bulk_send(payload);
 
-  fp = SPIFFS.open("backup.txt","r");
-  if(!fp)
-  {
-    Serial.print("can not open backup.txt");
-  }
+  Serial.println("Contents of payload\n"+String(payload));
+  Serial.println("sent size["+String(sentNum)+"]Bytes");  
 
-  bulkdata = fp.readStringUntil('\n');
-
-  Serial.println((char *)bulkdata.c_str());
- 
-  uint8_t sentNum = ambient.bulk_send((char *)bulkdata.c_str());
-
-  Serial.println(sentNum);
-  fp.close();
-  
-  SPIFFS.remove("backup.txt");
-  
+  free(payload);
 }
 
