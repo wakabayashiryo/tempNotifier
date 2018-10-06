@@ -21,7 +21,6 @@ bool WiFiconnect(void)
   {
     if (timeout - (int32_t)millis() < 0) 
     {
-      Serial.println("[error]:Access point connection timed out.");
       return false;
     }
     delay(500);
@@ -31,8 +30,6 @@ bool WiFiconnect(void)
   }
        
   wifi_set_sleep_type(MODEM_SLEEP_T);
-  
-  Send2LINE("WiFi info","SSID:"+String(WiFi.SSID())+"  IPaddress:"+WiFi.localIP().toString());
-  
+    
   return true;
 }

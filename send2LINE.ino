@@ -1,5 +1,10 @@
+#include <ArduinoJson.h>
 
-// definitation of IFTTT
+#define _DEBUG            0
+
+#define _CLIENT_TIMEOUT   5000
+
+//definitation of IFTTT
 #define IFTTT_HOST_NAME   "maker.ifttt.com"
 #define IFTTT_EVENT_NAME  "temp_notify"
 #define IFTTT_KEY         "cdjsD1Qw-5TOT4G3t53Zv_"
@@ -8,11 +13,9 @@
 StaticJsonBuffer<200> jsonbuff;
 JsonObject& dat = jsonbuff.createObject();
 
-void Send2LINE(String category,String message)
+int32_t Send2LINE(String category,String message)
 {
-  if(category == "error")
-    digitalWrite(STAT_ERROR ,LOW);
-    
+   
   Serial.println("[" + category + "]:" + message);
     
   dat["value1"] = category;
@@ -21,9 +24,10 @@ void Send2LINE(String category,String message)
   // Use WiFiClient class to create TCP connections
   if (!client.connect(IFTTT_HOST_NAME, PORT_NUMBER)) 
   {
-    digitalWrite(STAT_ERROR ,LOW);
+#if _DEBUG
     Serial.println("[error]:Did not connect with IFTTT server.");
-    return ;
+#endif
+    return -1;
   }
   
   // Create HTML Packets sent to IFTTT
@@ -34,33 +38,36 @@ void Send2LINE(String category,String message)
   Packets += "Content-Type: application/json\r\n\r\n";
   dat.printTo(Packets);
   Packets += "\r\n";
-  //Serial.println(Packets);
-
-  digitalWrite(STAT_ACT ,LOW);
+#if _DEBUG
+  Serial.println(Packets);
+#endif
   
   // This will send the request to the server
   client.print(Packets);
     
-  int32_t timeout = millis() + 5000;
+  int32_t timeout = millis() + _CLIENT_TIMEOUT;
   while (client.available() == 0) 
   {
     if (timeout - (int32_t)millis() < 0) 
     {
       client.stop();
-      
-      digitalWrite(STAT_ERROR ,LOW);
+#if _DEBUG 
       Serial.println("[error]:Recieving response timed out from server.");
-      return ;
+#endif
+      return -2;
     }
   }
-  digitalWrite(STAT_ACT ,HIGH);
   
   // Read all the lines of the reply from server and print them to Serial
   while (client.available()) 
   {
       //Flush message received from server
-      //Serial.print(client.readStringUntil('\r'));
+#if _DEBUG
+      Serial.print(client.readStringUntil('\r'));
+#else
       client.readStringUntil('\r');
+#endif
   }
-
+  
+  return 0;
 }

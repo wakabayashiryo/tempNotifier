@@ -1,6 +1,5 @@
 #include <ESP8266WiFi.h>
 #include <Wire.h>
-#include <ArduinoJson.h>
 #include <string>
 #include <DHT.h>
 #include <Adafruit_Sensor.h>
@@ -50,14 +49,15 @@ void setup(void)
 
   extAmbient_Init(&client);
   
+  Send2LINE("WiFi info","SSID:"+String(WiFi.SSID())+"  IPaddress:"+WiFi.localIP().toString());
   Send2LINE("info","Start Enviroment Monitor!");
 }
 
 void loop(void)
-{  
-  temp  = dht.readTemperature();
-  humid = dht.readHumidity();
-  press = bmp.readPressure();
+{    
+  temp      = dht.readTemperature();
+  humid     = dht.readHumidity();
+  press     = bmp.readPressure()/100;
   heatindex = floor(0.81*temp+0.01*humid*(0.99*temp-14.3)+46.3);
   
   if(heatindex<=60&&80<=heatindex)
@@ -73,6 +73,7 @@ void loop(void)
     {
       connectionIs = true;
       extAmbient_BulkSend();
+      delay(5000);
       digitalWrite(STAT_ERROR ,HIGH);
     }
     else if(connectionIs==true)
@@ -86,7 +87,7 @@ void loop(void)
   {
     digitalWrite(STAT_WIFI ,LOW);
     
-    extAmbient_Set(temp,humid,press/100,heatindex); 
+    extAmbient_Set(temp,humid,press,heatindex); 
         
     digitalWrite(STAT_ACT ,LOW);
     extAmbient_Send();
@@ -97,12 +98,9 @@ void loop(void)
     digitalWrite(STAT_WIFI ,HIGH);
     
     digitalWrite(STAT_ACT ,LOW);
-    extAmbient_Store(temp,humid,press/100,heatindex);
+    extAmbient_Store(temp,humid,press,heatindex);
     digitalWrite(STAT_ACT ,HIGH);
   }      
-    
+  
   delay(WakePeriod*60000);
 }
-
-
-
