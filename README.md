@@ -1,7 +1,7 @@
 # tempNotifier
 
 - ## Require Device Configrations
-    - ## Must Set Crystal Frequency of board configration to __**26MHz**__
+    - ## Must Set Crystal Frequency of board setting to __**26MHz**__
     |contents|parameter|
     |:---:|:--:|
     |device|esp8266 generic|   
@@ -17,7 +17,8 @@
     |Debug|Disabled|
     |DebugLevel|None|
     |FlashErase|None|  
-    |UploadSpeed|115200bps|
+    |UploadSpeed|115200bps| 
+    can use 921600bps too.This speed can write to flash faster than 115200bps
 
 - ## introduction method of Ambient
 
