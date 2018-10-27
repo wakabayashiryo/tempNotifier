@@ -5,16 +5,16 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
 
-#define WakePeriod        10//unit:minute
+#define _WakePeriod       10//unit:minute
 
-#define STAT_ACT          12
-#define STAT_ERROR        13
-#define STAT_WIFI         16
+#define _STAT_ACT         12
+#define _STAT_ERROR       13
+#define _STAT_WIFI        16
 
-#define DHT_PIN           14
-#define DHT_TYPE          DHT11
+#define _DHT_PIN          14
+#define _DHT_TYPE         DHT11
 float temp,humid,press,heatindex;
-DHT dht(DHT_PIN,DHT_TYPE);
+DHT dht(_DHT_PIN,_DHT_TYPE);
 
 Adafruit_BMP280 bmp;
 
@@ -24,13 +24,13 @@ bool connectionIs = false;
 
 void setup(void)
 {
-  pinMode(STAT_WIFI ,OUTPUT);
-  pinMode(STAT_ERROR,OUTPUT);
-  pinMode(STAT_ACT  ,OUTPUT);
+  pinMode(_STAT_WIFI ,OUTPUT);
+  pinMode(_STAT_ERROR,OUTPUT);
+  pinMode(_STAT_ACT  ,OUTPUT);
 
-  digitalWrite(STAT_WIFI ,HIGH);
-  digitalWrite(STAT_ERROR,HIGH);
-  digitalWrite(STAT_ACT  ,HIGH);
+  digitalWrite(_STAT_WIFI ,HIGH);
+  digitalWrite(_STAT_ERROR,HIGH);
+  digitalWrite(_STAT_ACT  ,HIGH);
   
   Serial.begin(115200);
 
@@ -60,12 +60,12 @@ void loop(void)
   press     = bmp.readPressure()/100;
   heatindex = floor(0.81*temp+0.01*humid*(0.99*temp-14.3)+46.3);
   
-  if(heatindex<=60&&80<=heatindex)
+  if(heatindex<=60||80<=heatindex)
     Send2LINE("warinig","It is an unpleasant environment now. ["+String(heatindex)+"]");
 
   if(WiFi.status()!=WL_CONNECTED)
   {    
-    digitalWrite(STAT_ERROR ,LOW);
+    digitalWrite(_STAT_ERROR ,LOW);
     
     WiFi.disconnect();
     delay(100);
@@ -73,8 +73,9 @@ void loop(void)
     {
       connectionIs = true;
       extAmbient_BulkSend();
-      delay(5000);
-      digitalWrite(STAT_ERROR ,HIGH);
+      digitalWrite(_STAT_ERROR ,HIGH);
+      delay(_WakePeriod*60000);
+      return ;
     }
     else if(connectionIs==true)
     {
@@ -85,22 +86,22 @@ void loop(void)
 
   if(connectionIs==true)
   {
-    digitalWrite(STAT_WIFI ,LOW);
+    digitalWrite(_STAT_WIFI ,LOW);
     
     extAmbient_Set(temp,humid,press,heatindex); 
         
-    digitalWrite(STAT_ACT ,LOW);
+    digitalWrite(_STAT_ACT ,LOW);
     extAmbient_Send();
-    digitalWrite(STAT_ACT ,HIGH);
+    digitalWrite(_STAT_ACT ,HIGH);
   }
   else
   {
-    digitalWrite(STAT_WIFI ,HIGH);
+    digitalWrite(_STAT_WIFI ,HIGH);
     
-    digitalWrite(STAT_ACT ,LOW);
+    digitalWrite(_STAT_ACT ,LOW);
     extAmbient_Store(temp,humid,press,heatindex);
-    digitalWrite(STAT_ACT ,HIGH);
+    digitalWrite(_STAT_ACT ,HIGH);
   }      
   
-  delay(WakePeriod*60000);
+  delay(_WakePeriod*60000);
 }

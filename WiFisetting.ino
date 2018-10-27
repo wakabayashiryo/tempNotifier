@@ -10,7 +10,7 @@ void SSIDregister(void)
   WiFi.mode(WIFI_STA);
   SSIDs.addAP("4CE676F701EA",  "");
   SSIDs.addAP("4CE676F701EA-1","");
-  SSIDs.addAP("aterm-912afc-g","");
+  SSIDs.addAP("F660A-T2G6-G",  "");
 }
 
 bool WiFiconnect(void)
@@ -24,9 +24,9 @@ bool WiFiconnect(void)
       return false;
     }
     delay(500);
-    digitalWrite(STAT_WIFI ,HIGH);
+    digitalWrite(_STAT_WIFI ,HIGH);
     delay(500);
-    digitalWrite(STAT_WIFI ,LOW);
+    digitalWrite(_STAT_WIFI ,LOW);
   }
        
   wifi_set_sleep_type(MODEM_SLEEP_T);

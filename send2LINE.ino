@@ -5,10 +5,10 @@
 #define _CLIENT_TIMEOUT   5000
 
 //definitation of IFTTT
-#define IFTTT_HOST_NAME   "maker.ifttt.com"
-#define IFTTT_EVENT_NAME  "temp_notify"
-#define IFTTT_KEY         "cdjsD1Qw-5TOT4G3t53Zv_"
-#define PORT_NUMBER       80
+#define _IFTTT_HOST_NAME  "maker.ifttt.com"
+#define _IFTTT_EVENT_NAME "temp_notify"
+#define _IFTTT_KEY        "cdjsD1Qw-5TOT4G3t53Zv_"
+#define _PORT_NUMBER      80
 
 StaticJsonBuffer<200> jsonbuff;
 JsonObject& dat = jsonbuff.createObject();
@@ -22,7 +22,7 @@ int32_t Send2LINE(String category,String message)
   dat["value2"] = message;
   
   // Use WiFiClient class to create TCP connections
-  if (!client.connect(IFTTT_HOST_NAME, PORT_NUMBER)) 
+  if (!client.connect(_IFTTT_HOST_NAME, _PORT_NUMBER)) 
   {
 #if _DEBUG
     Serial.println("[error]:Did not connect with IFTTT server.");
@@ -32,7 +32,7 @@ int32_t Send2LINE(String category,String message)
   
   // Create HTML Packets sent to IFTTT
   String Packets;
-  Packets  = "POST https://maker.ifttt.com/trigger/" + String(IFTTT_EVENT_NAME) + "/with/key/" + String(IFTTT_KEY) + "/ "+"HTTP/1.1\r\n";
+  Packets  = "POST https://maker.ifttt.com/trigger/" + String(_IFTTT_EVENT_NAME) + "/with/key/" + String(_IFTTT_KEY) + "/ "+"HTTP/1.1\r\n";
   Packets += "Host:maker.ifttt.com\r\n";
   Packets += "Content-Length:" + String(dat.measureLength()) + "\r\n";
   Packets += "Content-Type: application/json\r\n\r\n";

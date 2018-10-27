@@ -4,17 +4,17 @@
 #define _DEBUG            0
 
 //definitation of Ambient
-#define AMBIENT_ID        6469
-#define AMBIENT_KEY       "62ebf86863cc7a62"  
+#define _AMBIENT_ID       6469
+#define _WRITE_KEY        "62ebf86863cc7a62"  
 Ambient ambient;
 
-#define JST               3600*9
+#define _JST              3600*9
 time_t t;
 struct tm *tm;
 
 //definitation of buffer
 #define _BUFF_MAXSIZE     50000
-#define _ALLOW_SPACE      500
+#define _ALLOW_FREESPACE  500
 #define _REALLOC_SIZE     1000
 
 static char*    payload;
@@ -24,9 +24,9 @@ static uint32_t buffer_size;
 
 void extAmbient_Init(WiFiClient *clt)
 {
-  ambient.begin(AMBIENT_ID,AMBIENT_KEY,clt);
+  ambient.begin(_AMBIENT_ID,_WRITE_KEY,clt);
   
-  configTime( JST, 0, "ntp.nict.jp", "ntp.jst.mfeed.ad.jp");
+  configTime( _JST, 0, "ntp.nict.jp", "ntp.jst.mfeed.ad.jp");
 
   extAmbient_Create_Buffer(5000);
 }
@@ -56,30 +56,30 @@ static int32_t Check_Size(uint32_t size)
 {
   payload_size += size;
   
-  if((buffer_size - payload_size)  < _ALLOW_SPACE)
+  if((buffer_size - payload_size)  < _ALLOW_FREESPACE)
   {
-    if((buffer_size +_REALLOC_SIZE) > _BUFF_MAXSIZE)
+    if((buffer_size + _REALLOC_SIZE) > _BUFF_MAXSIZE)
     {
 #if _DEBUG
-    Serial.println("[error]:Buffer size exceeded maximum");
+      Serial.println("[error]:Buffer size exceeded maximum");
 #endif
       return -1;
     }
 
-    char *res = (char *)realloc(payload,sizeof(char*) *_REALLOC_SIZE);
+    char *res = (char *)realloc(payload,sizeof(char*) * _REALLOC_SIZE);
     if(res == NULL)
     {
 #if _DEBUG
-    Serial.println("[error]:Failed to add new buffer");
+      Serial.println("[error]:Failed to add new buffer");
 #endif
       return -2;
     }
     buffer_size += _REALLOC_SIZE;
   }
 #if _DEBUG
-    Serial.print("[data]:wrote size:"+ String(size) +"bytes ");
-    Serial.print("buffer_size:"+ String(buffer_size) +"bytes ");
-    Serial.println("payload_size:"+ String(payload_size) +"bytes");
+  Serial.print("[data]:wrote size:"+ String(size) +"bytes ");
+  Serial.print("buffer_size:"+ String(buffer_size) +"bytes ");
+  Serial.println("payload_size:"+ String(payload_size) +"bytes");
 #endif
   
   return 0;
@@ -110,7 +110,7 @@ int32_t extAmbient_Create_Buffer(uint32_t buffersize)
   payload_size = 0;
   memset(payload,NULL,buffersize);
   
-  Check_Size(sprintf(&payload[payload_size],"{\"writeKey\":\"%s\",\"data\":[",AMBIENT_KEY));
+  Check_Size(sprintf(&payload[payload_size],"{\"writeKey\":\"%s\",\"data\":[",_WRITE_KEY));
 
   return result;
 }
@@ -162,24 +162,24 @@ void extAmbient_Store(float d1,float d2,float d3,float d4)
 
 int32_t extAmbient_BulkSend(void)
 {
-  int32_t sentNum;
+  int32_t sentlen;
 
   Check_Size(sprintf(&payload[payload_size-1],"]}\r\n"));
   
-  sentNum = ambient.bulk_send(payload);
+  sentlen = ambient.bulk_send(payload);
   
   free(payload);
   
 #if _DEBUG
-    Serial.println("[data]:\n" + String(payload));
-    Serial.print("[data]:payload_size:"+ String(strlen(payload)) +"bytes ");
-    Serial.println("sent_size:"+ String(sentNum) +"bytes");
+  Serial.println("[data]:\n" + String(payload));
+  Serial.print("[data]:payload_size:"+ String(strlen(payload)) +"bytes ");
+  Serial.println("sent_size:"+ String(sentlen) +"bytes");
 #endif
   
-  if(sentNum != strlen(payload))
+  if(sentlen != strlen(payload))
   {
 #if _DEBUG
-    Serial.println("[error]:Filed to sent bulk data");
+    Serial.println("[error]:Failed to send bulk data");
 #endif
     return -1;
   }
