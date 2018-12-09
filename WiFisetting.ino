@@ -8,6 +8,9 @@ void SSIDregister(void)
 {
   // We start by connecting to a WiFi network
   WiFi.mode(WIFI_STA);
+  
+  WiFi.setSleepMode(WIFI_MODEM_SLEEP);
+  
   SSIDs.addAP("4CE676F701EA",  "");
   SSIDs.addAP("4CE676F701EA-1","");
   SSIDs.addAP("F660A-T2G6-G",  "");
@@ -28,8 +31,6 @@ bool WiFiconnect(void)
     delay(500);
     digitalWrite(_STAT_WIFI ,LOW);
   }
-       
-  wifi_set_sleep_type(MODEM_SLEEP_T);
-    
+      
   return true;
 }

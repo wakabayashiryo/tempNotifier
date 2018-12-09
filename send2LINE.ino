@@ -38,6 +38,7 @@ int32_t Send2LINE(String category,String message)
   Packets += "Content-Type: application/json\r\n\r\n";
   dat.printTo(Packets);
   Packets += "\r\n";
+  
 #if _DEBUG
   Serial.println(Packets);
 #endif
@@ -61,11 +62,11 @@ int32_t Send2LINE(String category,String message)
   // Read all the lines of the reply from server and print them to Serial
   while (client.available()) 
   {
-      //Flush message received from server
+    //Flush message received from server
 #if _DEBUG
-      Serial.print(client.readStringUntil('\r'));
+    Serial.print(client.readStringUntil('\r'));
 #else
-      client.readStringUntil('\r');
+    client.readStringUntil('\r');
 #endif
   }
   

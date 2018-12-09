@@ -60,7 +60,7 @@ void loop(void)
   press     = bmp.readPressure()/100;
   heatindex = floor(0.81*temp+0.01*humid*(0.99*temp-14.3)+46.3);
   
-  if(heatindex<=60||80<=heatindex)
+  if( (heatindex<=60) || (80<=heatindex) )
     Send2LINE("warinig","It is an unpleasant environment now. ["+String(heatindex)+"]");
 
   if(WiFi.status()!=WL_CONNECTED)

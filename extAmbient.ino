@@ -33,6 +33,10 @@ void extAmbient_Init(WiFiClient *clt)
 
 void extAmbient_Set(float d1,float d2,float d3,float d4)
 {
+#if _DEBUG
+    Serial.println("[Info]:Set some data to send.");
+#endif
+
   ambient.set(1,d1);
   ambient.set(2,d2);
   ambient.set(3,d3);
@@ -48,6 +52,9 @@ bool extAmbient_Send(void)
 #endif
     return false;
   }
+#if _DEBUG
+    Serial.println("[Info]:Successed to sent a data");
+#endif
   return true;
 }
 
